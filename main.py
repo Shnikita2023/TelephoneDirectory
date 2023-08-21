@@ -1,7 +1,11 @@
 from src.interface import Interface
 
 
-def main():
+def main() -> None:
+    """
+    Запуск программы
+    :return: None
+    """
     interface: Interface = Interface()
     interface.main_program()
 

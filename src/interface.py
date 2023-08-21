@@ -1,4 +1,5 @@
 import re
+from typing import Callable
 
 from .directory import TelephoneDirectory
 
@@ -6,11 +7,11 @@ from .directory import TelephoneDirectory
 class Interface:
     """Консольный интерфейс для телефонного справочника"""
     DASHES: str = "-" * 100
-    print(DASHES)
-    print("Добро пожаловать в телефонный справочник!")
-    print(DASHES)
+    WELCOME_MESSAGE: str = "Добро пожаловать в телефонный справочник!"
+    print(DASHES, WELCOME_MESSAGE, DASHES, sep="\n")
 
     def __init__(self) -> None:
+        """Инициализация объекта TelephoneDirectory"""
         self.telephone_directory: TelephoneDirectory = TelephoneDirectory()
 
     def start_program(self) -> str:
@@ -18,7 +19,7 @@ class Interface:
         print("Что-бы продолжить выберите цифру из ниже предоставленного списка, если желаете выйти(введите:"
               "'выход')")
         answer = input("1. Добавить запись в справочник\n"
-                       "2. Вывести записи по характеристикам\n"
+                       "2. Вывод постранично записей из справочника\n"
                        "3. Найти определённые записи по любым из параметров\n"
                        "4. Отредактировать запись\n"
                        "Введите цифру из выше перечисленного списка: ").strip()
@@ -27,7 +28,7 @@ class Interface:
 
     def main_program(self) -> None:
         """Основная работа программы"""
-        dict_call_func: dict = {
+        dict_call_func: dict[str, Callable[[], str]] = {
             "1": self.add_data,
             "2": self.print_data,
             "3": self.search_data,
@@ -38,12 +39,11 @@ class Interface:
             if result.lower() == "выход":
                 break
             elif result in dict_call_func:
-                res = dict_call_func[result]
-                print(res())
-                print(self.DASHES)
+                res: Callable[[], str] = dict_call_func[result]
+                print(res(), self.DASHES, sep="\n")
             else:
-                print(self.DASHES)
-                print("Вы ввели некорректный формат данных, нужна ввести цифру от 1 до 4 или написать 'выход'")
+                print("Вы ввели некорректный формат данных, нужна ввести цифру от 1 до 4 или написать 'выход'",
+                      self.DASHES, sep="\n")
 
     def add_data(self) -> str:
         """Добавление данных"""
@@ -53,12 +53,14 @@ class Interface:
     def print_data(self) -> str:
         """Вывод данных"""
         while True:
-            page_number: str = input("Введите какую страницу справочника вывести: ")
-            page_size: str = input("Введите количество записей которые нужно вывести: ")
-            if int(page_number) > 0 and int(page_size) > 0:
-                return self.telephone_directory.output_part_entry(int(page_number), int(page_size))
-            print(self.DASHES)
-            print("Неверный формат данных: Введите число от 1 до ...")
+            try:
+                page_number: int = int(input("Введите какую страницу справочника вывести: "))
+                page_size: int = int(input("Введите количество записей которые нужно вывести: "))
+                if page_number > 0 and page_size > 0:
+                    return self.telephone_directory.output_part_entry(page_number, page_size)
+
+            except ValueError:
+                print(self.DASHES, "***Неверный формат данных***: Введите число от 1 до ...", sep="\n")
 
     def search_data(self) -> str:
         """Поиск данных"""
@@ -79,29 +81,35 @@ class Interface:
                                            "5. Телефон рабочий, "
                                            "6. Телефон сотовый\n"
                                            "Введите одну или несколько цифр из списка для поиска записей "
-                                           "(Пример: 1 или 1 4): ")
+                                           "(Пример: 1 или 1 4, или 1 5 3): ")
 
-            keys: list[str] = key_specification.split()
-            if all(key in specification for key in keys):
+            keys: set[str] = set(key_specification.split())
+            if keys.issubset(specification) and keys:
                 key_value_pairs: dict[str, str] = {}
                 for key in keys:
                     value_specification: str = input(f"Введите {specification[key]} по которому искать: ")
                     key_value_pairs[specification[key]] = value_specification
                 return self.telephone_directory.search_entry_on_param(key_value_pairs)
 
-            print(self.DASHES)
-            print("Неверный формат данных: Введите цифры от 1 до 6!")
+            print(self.DASHES, "Неверный формат данных: Введите цифры от 1 до 6!", sep="\n")
 
     def edit_data(self) -> str:
         """Редактирование данных"""
+        lenght_list_entry: int = len(self.telephone_directory.list_entries)
         while True:
-            index_entry: str = input("Введите номер записи, которую хотите отредактировать: ")
-            index_entry: int = int(index_entry) - 1
-            if 0 <= index_entry <= self.telephone_directory.lenght:
-                new_data: dict = self.preparation_data()
-                return self.telephone_directory.edit_entry(index_entry, new_data)
-            print(self.DASHES)
-            print(f"Неверный формат данных: Введите число от 1 до {self.telephone_directory.lenght}")
+            try:
+                index_entry: int = int(input("Введите номер записи, которую хотите отредактировать: "))
+                if lenght_list_entry == 0:
+                    print(self.DASHES)
+                    return "***Нет записей для редактирование***"
+                elif 0 < index_entry <= lenght_list_entry:
+                    new_data: dict = self.preparation_data()
+                    return self.telephone_directory.edit_entry(index_entry - 1, new_data)
+                else:
+                    raise ValueError
+
+            except ValueError:
+                print(f"***Неверный формат данных***: Введите число от 1 до {lenght_list_entry}")
 
     def preparation_data(self) -> dict[str, str]:
         """Подготовка данных"""

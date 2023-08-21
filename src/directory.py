@@ -5,8 +5,8 @@ class TelephoneDirectory:
     """Телефонный справочник"""
 
     def __init__(self) -> None:
+        """Инициализация объекта load_entries"""
         self.list_entries: list = self.load_entries()
-        self.lenght: int = len(self.list_entries)
 
     def add_entry(self, new_entry: dict[str, str]) -> str:
         """Добавление записи в справочник"""
@@ -23,10 +23,14 @@ class TelephoneDirectory:
 
     def search_entry_on_param(self, key_value_pairs: dict[str, str]) -> str:
         """Поиск записей в справочнике по нескольким параметрам"""
+        count: int = 0
         for index, dict_directory in enumerate(self.list_entries):
             if all(dict_directory[key] == value for key, value in key_value_pairs.items()):
+                count += 1
                 print(self.format_entry(index, dict_directory))
-        return "***Поиск завершён***"
+        if count:
+            return f"***Поиск завершён. Найдено {count} записи(запись)***"
+        return "***Записи с данными параметрами не найдены***"
 
     def output_part_entry(self, page_number: int, page_size: int) -> str:
         """Вывод определённых записей из справочника"""
@@ -37,7 +41,6 @@ class TelephoneDirectory:
             for index, item in enumerate(page_data):
                 print(self.format_entry(index, item))
             return "***Записи получены***"
-
         return "***Записи не найдены***"
 
     def format_entry(self, index: int, item: dict[str, str]) -> str:
