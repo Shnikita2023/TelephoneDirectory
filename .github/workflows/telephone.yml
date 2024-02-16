@@ -1,0 +1,9 @@
+name: Telephone
+on: workflow_dispatch
+jobs:
+  print:
+    runs-on: ubunty-latest
+    steps:
+      - name: Print in conlsole 
+        run: echo Hello GitHub
+    
